@@ -8,11 +8,8 @@ on:
 
 jobs:
   build:
-    name: Build APK (${{ matrix.target }})
+    name: Build APK (Release)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [android-arm, android-arm64, android-x64]
     steps:
       - uses: actions/checkout@v4
 
@@ -28,14 +25,13 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build APK (${{ matrix.target }})
-        run: flutter build apk --release --target-platform=${{ matrix.target }}
+      - name: Build APK
+        run: flutter build apk --release
 
-      - name: Upload APK (${{ matrix.target }})
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: akat-panel-${{ matrix.target }}
-          path: build/app/outputs/flutter-apk/app-${{ matrix.target }}-release.apk
+          name: akat-panel-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
   release:
@@ -46,17 +42,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: akat-panel-*
-          merge-multiple: true
+          name: akat-panel-apk
           path: artifacts
 
-      - name: Rename APKs
+      - name: Rename APK
         run: |
-          for f in artifacts/*.apk; do
-            base=$(basename "$f")
-            arch=$(echo "$base" | sed 's/app-\(.*\)-release.apk/\1/')
-            mv "$f" "artifacts/akat-panel-${{ github.ref_name }}-${arch}.apk"
-          done
+          mv artifacts/app-release.apk artifacts/akat-panel-${{ github.ref_name }}.apk
           ls -la artifacts/
 
       - name: Create Release
