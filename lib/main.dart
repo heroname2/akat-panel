@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
+import 'services/api_service.dart';
 import 'services/update_service.dart';
 import 'widgets/update_dialog.dart';
+import 'providers/dashboard_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,12 +13,24 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   // Initialize update service
   final updateService = UpdateService();
   updateService.initialize();
-  
-  runApp(const AkatPanelApp());
+
+  // Initialize API service
+  final apiService = ApiService();
+  apiService.loadTokens();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        Provider<ApiService>.value(value: apiService),
+      ],
+      child: const AkatPanelApp(),
+    ),
+  );
 }
 
 class AkatPanelApp extends StatelessWidget {
