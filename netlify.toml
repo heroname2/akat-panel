@@ -1,0 +1,14 @@
+# netlify.toml - Identity kapatma ayarları
+[build]
+  publish = "build/web"
+  command = "flutter build web --release"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+# Identity'yi devre dışı bırakmak için (Netlify dashboard'da da yapılabilir)
+# Bu dosya deploy edildikten sonra Netlify dashboard > Site settings > Identity > Disable Identity yapılmalı
