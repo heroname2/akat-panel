@@ -8,7 +8,34 @@ on:
 
 jobs:
   build:
-    name: Build APK (Release)
+    name: Build APK (ARM64)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: 'stable'
+
+      - run: flutter pub get
+
+      - name: Build APK (ARM64)
+        run: flutter build apk --release --target-platform=android-arm64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: akat-panel-apk-arm64
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  build-arm32:
+    name: Build APK (ARM32)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,29 +52,35 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Build APK (ARM32)
+        run: flutter build apk --release --target-platform=android-arm
 
       - uses: actions/upload-artifact@v4
         with:
-          name: akat-panel-apk
+          name: akat-panel-apk-arm32
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
   release:
     name: Create Release
-    needs: build
+    needs: [build, build-arm32]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: akat-panel-apk
-          path: artifacts
+          name: akat-panel-apk-arm64
+          path: artifacts/arm64
 
-      - name: Rename APK
+      - uses: actions/download-artifact@v4
+        with:
+          name: akat-panel-apk-arm32
+          path: artifacts/arm32
+
+      - name: Rename APKs
         run: |
-          mv artifacts/app-release.apk artifacts/akat-panel-${{ github.ref_name }}.apk
+          mv artifacts/arm64/app-release.apk artifacts/akat-panel-${{ github.ref_name }}-arm64.apk
+          mv artifacts/arm32/app-release.apk artifacts/akat-panel-${{ github.ref_name }}-arm32.apk
           ls -la artifacts/
 
       - name: Create Release
